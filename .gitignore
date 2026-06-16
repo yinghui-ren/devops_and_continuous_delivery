@@ -1,0 +1,7 @@
+*:Zone.Identifier
+
+# Vagrant runtime directory
+.vagrant/
+
+# Application logs
+*.log
