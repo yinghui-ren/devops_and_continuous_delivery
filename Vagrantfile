@@ -34,7 +34,7 @@ Vagrant.configure("2") do |config|
       apt-get install -y git curl
 
       echo "=== Installing Jenkins ==="
-      curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key \
+      curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key \
         | tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
       echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
         https://pkg.jenkins.io/debian-stable binary/" \
@@ -57,6 +57,8 @@ Vagrant.configure("2") do |config|
 
     vm2.vm.network "private_network", ip: "192.168.57.11"
     vm2.vm.network "forwarded_port", guest: 8082, host: 8082
+    vm2.vm.network "forwarded_port", guest: 8083, host: 8083 # WordPress (Docker Compose, MEDIUM tier)
+    vm2.vm.network "forwarded_port", guest: 8084, host: 8084 # Podman-run container (MEDIUM tier)
     vm2.vm.network "forwarded_port", guest: 22,   host: 2211, id: "ssh", auto_correct: true
 
     vm2.vm.synced_folder ".", "/vagrant"

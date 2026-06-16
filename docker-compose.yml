@@ -1,0 +1,44 @@
+# Lab 2 (MEDIUM) — "Deploy an application (example: wordpress) with
+# Docker Compose". Two services: a MySQL database and WordPress,
+# wired together on a private compose network with named volumes for
+# persistence.
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: lab2-wordpress-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress_pw
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - wp_net
+
+  wordpress:
+    image: wordpress:latest
+    container_name: lab2-wordpress
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress_pw
+      WORDPRESS_DB_NAME: wordpress
+    ports:
+      - "8083:80"
+    volumes:
+      - wp_data:/var/www/html
+    networks:
+      - wp_net
+
+networks:
+  wp_net:
+
+volumes:
+  db_data:
+  wp_data:
