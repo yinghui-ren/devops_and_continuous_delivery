@@ -55,6 +55,15 @@ pipeline {
                     sh '''
                         JAR_FILE=$(ls ${APP_JAR})
 
+                        # The credential's private key can pick up CRLF line
+                        # endings when pasted through a browser textarea on
+                        # Windows. The Java-based SSH launcher tolerates that,
+                        # but the system OpenSSH client (used below) does
+                        # not and fails with "error in libcrypto". Normalize
+                        # to LF and tighten permissions before using it.
+                        sed -i 's/\\r$//' "$DEPLOY_KEY"
+                        chmod 600 "$DEPLOY_KEY"
+
                         scp -o StrictHostKeyChecking=no -i $DEPLOY_KEY \
                             "$JAR_FILE" \
                             $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/app.jar
