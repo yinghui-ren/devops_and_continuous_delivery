@@ -5,6 +5,7 @@ pipeline {
         APP_DIR = "app"
         APP_PORT = "8081"
         APP_LOG = "/tmp/local-library.log"
+        MONGOMS_VERSION = "4.4.29"
     }
 
     stages {
