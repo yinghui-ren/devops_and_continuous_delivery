@@ -6,7 +6,11 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 let mongoServer;
 
 async function connect() {
-  mongoServer = await MongoMemoryServer.create();
+  mongoServer = await MongoMemoryServer.create({
+    binary: {
+      version: process.env.MONGOMS_VERSION || "4.4.29",
+    },
+  });
   const uri = mongoServer.getUri();
   await mongoose.connect(uri);
 }
