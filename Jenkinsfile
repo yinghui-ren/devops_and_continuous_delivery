@@ -64,6 +64,13 @@ pipeline {
                         sed -i 's/\\r$//' "$DEPLOY_KEY"
                         chmod 600 "$DEPLOY_KEY"
 
+                        echo "--- DEBUG: key diagnostics (no secret content) ---"
+                        wc -l "$DEPLOY_KEY"
+                        wc -c "$DEPLOY_KEY"
+                        head -c 40 "$DEPLOY_KEY" | od -c | head -5
+                        ssh-keygen -y -f "$DEPLOY_KEY" || echo "ssh-keygen FAILED to parse key"
+                        echo "--- END DEBUG ---"
+
                         scp -o StrictHostKeyChecking=no -i $DEPLOY_KEY \
                             "$JAR_FILE" \
                             $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/app.jar
