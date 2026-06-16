@@ -89,17 +89,30 @@ curl http://localhost:8082/actuator/health
 
 ```bash
 docker login          # interactive, run by the student (not automated)
-docker push <dockerhub-username>/petclinic-ubuntu:1.0
+docker push huang199864/petclinic-ubuntu:1.0
 ```
+
+### 5.6 Result
+
+- DockerHub account: `huang199864`
+- Image: `huang199864/petclinic-ubuntu:1.0`
+- Push output: `1.0: digest: sha256:e4fac1750bfd9020a876ab01ca3f931aaaf980040333ac033b9670acd9110517 size: 1189`
+- Verified reachable at https://hub.docker.com/r/huang199864/petclinic-ubuntu
 
 ## 6. Problems and Solutions
 
 | Date | Problem | Cause | Solution | Result |
 | --- | --- | --- | --- | --- |
 | 2026-06-16 | `vagrant up vm2` lost SSH connection mid-provision ("SSH connection was unexpectedly closed") | Installing `docker-ce` brings up the `docker0` bridge / rewrites iptables rules, which can momentarily disrupt the existing NAT'd SSH session | Re-ran `vagrant provision vm2`; once Docker's network setup settled, SSH reconnected normally | Resolved |
+| 2026-06-16 | `vagrant provision vm2` then failed: `dpkg was interrupted, you must manually run 'sudo dpkg --configure -a'` | The earlier SSH disconnect happened mid-`apt-get install`, leaving dpkg in an inconsistent state | Ran `sudo dpkg --configure -a` over SSH to finish the half-installed packages, then re-provisioned | Resolved |
+| 2026-06-16 | Re-running provision failed again: `gpg: cannot open '/dev/tty'` / `curl: (23) Failed writing body` | The Docker GPG-key step (`gpg --dearmor -o .../docker.gpg`) isn't idempotent — on a second run the destination file already exists and gpg prompts for overwrite confirmation on a tty that doesn't exist in non-interactive provisioning | Finished the remaining setup manually over SSH (`usermod -aG docker`, `systemctl enable/start docker`); fixed the Vagrantfile to `rm -f` the old key and pass `gpg --yes` so future re-provisions are idempotent | Resolved |
+| 2026-06-16 | `docker push` reported `tag does not exist` | Ran `docker login`/`docker push` in the **Windows host's own Docker** (PowerShell), which is a completely separate Docker installation/image store from the one inside VM2 where the image was actually built | SSH into VM2 first, then run `docker login` + `docker push` there | Resolved |
 
 ## 7. Progress Log
 
 | Date | Work Done | Commit ID |
 | --- | --- | --- |
-| 2026-06-16 | Created lab2 folder/branch, Vagrantfile (vm1 Jenkins + vm2 Docker), multi-stage Dockerfile for PetClinic | |
+| 2026-06-16 | Created lab2 folder/branch, Vagrantfile (vm1 Jenkins + vm2 Docker), multi-stage Dockerfile for PetClinic | 8787928 |
+| 2026-06-16 | Brought up vm2, fixed dpkg/gpg provisioning issues, verified Docker with hello-world | |
+| 2026-06-16 | Built and ran `petclinic-ubuntu:1.0` on vm2, verified health endpoint from Windows host via port 8082 | |
+| 2026-06-16 | EASY tier complete: tagged and pushed image to DockerHub (`huang199864/petclinic-ubuntu:1.0`) | |
