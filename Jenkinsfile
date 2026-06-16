@@ -44,8 +44,12 @@ pipeline {
             steps {
                 // Copy the freshly built JAR to the dedicated deploy VM and
                 // (re)start the application there over SSH.
+                // Re-uses the already-verified agent-vm-ssh key: its public
+                // half was added to the deploy VM's authorized_keys, so the
+                // same credential works for both the agent connector and
+                // this SSH/SCP deploy step.
                 withCredentials([sshUserPrivateKey(
-                        credentialsId: 'deploy-vm-ssh',
+                        credentialsId: 'agent-vm-ssh',
                         keyFileVariable: 'DEPLOY_KEY',
                         usernameVariable: 'DEPLOY_USER')]) {
                     sh '''
