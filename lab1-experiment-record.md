@@ -4,8 +4,11 @@
 
 - Course: DevOps and Continuous Delivery
 - Lab: Lab 1 - First CI/CD Pipeline
-- Repository: git@github.com:yinghui-ren/lab1-cicd-pipeline.git
+- Repository: https://github.com/yinghui-ren/devops_and_continuous_delivery.git
+- Working branch (personal commits): Yuhao
 - Main branch: main
+- Lab files path in repo: repository root (on the `Yuhao` branch this
+  `lab1-cicd-pipeline` folder IS the repo root — no `lab1/` prefix)
 
 ## 2. Team Work
 
@@ -177,12 +180,72 @@ host with a plain redirect appeared instantly inside the VM at
 | --- | --- | --- | --- | --- |
 | 2026-06-02 | `vagrant up` failed: `Job for jenkins.service failed` | Jenkins LTS (>=2.426) requires Java 21+; Vagrantfile installed Java 17 | Installed `openjdk-21-jdk`, `systemctl reset-failed jenkins`, `systemctl start jenkins`; updated Vagrantfile to install Java 21 from the start | Resolved |
 | 2026-06-16 | `vagrant ssh -c "..."` failed with "Identity file ... not accessible" / Permission denied | Project path contains Chinese characters and spaces, which the bundled Vagrant SSH client mis-parses on Windows | Call `ssh -i <private_key_path> -p 2222 vagrant@127.0.0.1 "<cmd>"` directly instead of `vagrant ssh -c` | Resolved |
+| 2026-06-16 | Jenkins job: `Unable to find Jenkinsfile from git ...` | Script Path was guessed as `lab1/lab1-cicd-pipeline/Jenkinsfile`, assuming a monorepo layout; the actual repo root (on branch `Yuhao`) IS this folder | Set Script Path to plain `Jenkinsfile` | Resolved |
+| 2026-06-16 | Deploy stage: `Could not find credentials entry with ID 'deploy-vm-ssh'` | Credential was never actually created in Jenkins (only `agent-vm-ssh` existed) | Created the missing credential | Resolved (but led to the next problem) |
+| 2026-06-16 | Deploy stage: `Load key "****": error in libcrypto` / `Permission denied (publickey)` even though the same key worked for the agent SSH launcher | The private key got corrupted (400 → 416 bytes, 8 → 9 lines) when copy-pasted through the browser credential textarea on Windows | Created a brand-new credential (`deploy-vm-ssh-clean`) directly via Jenkins' Script Console (`/scriptText`), feeding it the exact bytes read straight from the `.vagrant` private key file — no clipboard involved | Resolved |
+| 2026-06-16 | Deploy stage: ssh remote command exits with code 255 | `pkill -f $DEPLOY_DIR/app.jar` matches **its own invocation's argv** (which also contains that path string) and kills itself; the ssh channel then reports `exit-signal` instead of a normal exit code | Replaced `pkill -f` with a PID-file pattern: `echo $! > app.pid` on start, `kill $(cat app.pid)` on stop | Resolved |
 
-## 10. Progress Log
+## 10. Part 4 — Multi-VM Architecture
+
+```
+                 Windows host (browser / curl / PowerShell)
+                       │ :8080 (Jenkins UI)   │ :8081 (App)
+                       ▼                      ▼
+   ┌──────────────────────────┐      ┌──────────────────────────┐
+   │ master (192.168.56.10)   │      │ deploy (192.168.56.12)   │
+   │ Jenkins controller       │◄────►│ runs the deployed JAR    │
+   └────────────┬──────────────┘ SSH └──────────────▲────────────┘
+                 │ SSH (agent connector)             │ SCP + SSH
+                 ▼                                   │
+   ┌──────────────────────────┐                      │
+   │ agent (192.168.56.11)    │──────────────────────┘
+   │ label: agent-vm          │   Build + Test (Maven), then
+   │ runs Checkout/Build/Test │   deploys the JAR to "deploy"
+   └──────────────────────────┘
+```
+
+All three VMs share a VirtualBox private network (`192.168.56.0/24`)
+defined in the Vagrantfile via `config.vm.define`. Each machine also
+gets the default `/vagrant` synced folder and its own forwarded SSH
+port on the Windows host (`2222` master, `2200` agent, `2201` deploy).
+
+### Steps completed
+
+1. Added a private network + kept the existing Jenkins VM as the
+   `"default"` machine (`vagrant reload`) so prior state was preserved.
+2. Brought up a second VM (`agent`) with Java/Maven/Git; verified
+   `ping` connectivity to master over the private network.
+3. Triggered the pipeline with `curl`-equivalent calls (PowerShell
+   `Invoke-WebRequest` with HTTP Basic auth using a Jenkins API token)
+   from both the Windows host and from inside the `agent` VM —
+   both returned `HTTP 201 Created`.
+4. Registered `agent` as a permanent Jenkins SSH agent (label
+   `agent-vm`), using an SSH credential bound to its Vagrant-generated
+   key, with `authorized_keys` already set up by Vagrant.
+5. Brought up a third VM (`deploy`) — Java runtime only — to host the
+   running application, forwarding its port 8081 to the Windows host.
+6. Authorized the agent's public key on the deploy VM, and rewrote the
+   `Jenkinsfile` so:
+   - `agent { label 'agent-vm' }` — Checkout/Build/Test run on the
+     agent node, not the controller.
+   - The `Deploy` stage uses `withCredentials([sshUserPrivateKey(...)])`
+     to `scp` the built JAR to `deploy` and (re)start it there over
+     `ssh`, using a PID file rather than `pkill` to manage the process.
+   - `Verify` curls the deploy VM's `/actuator/health` endpoint.
+7. Confirmed end-to-end success (Jenkins build #15): Build → 59 tests
+   passed → JAR copied to `deploy` → app started → health check
+   returned `{"status":"UP"}` — verified independently from the
+   Windows host via `http://localhost:8081`.
+
+## 11. Progress Log
 
 | Date | Work Done | Commit ID |
 | --- | --- | --- |
 | 2026-06-02 | Created Git repository and prepared lab record document. | |
 | 2026-06-02 | Added Vagrantfile, Jenkinsfile, updated experiment record. | |
 | 2026-06-02 | Fixed Jenkins Java version issue; pipeline ran successfully end-to-end (Checkout/Build/Test/Deploy/Verify), app reachable at http://localhost:8081 | |
-| 2026-06-16 | Verified synced folder (/vagrant) and port forwarding (8080/8081/2222); started Part 4 (network improvements, second VM as agent, third VM as deploy target) | |
+| 2026-06-16 | Verified synced folder (/vagrant) and port forwarding (8080/8081/2222); started Part 4 (network improvements, second VM as agent, third VM as deploy target) | 97cda47 |
+| 2026-06-16 | Triggered pipeline via curl/API token from Windows host and from inside the agent VM (both HTTP 201) | |
+| 2026-06-16 | Registered agent VM as a Jenkins SSH agent (label agent-vm); built deploy VM | |
+| 2026-06-16 | Reworked Jenkinsfile for agent-based build/test + SSH deploy to the deploy VM; fixed Script Path, missing/corrupted credential, and pkill self-kill bug | f465764, 570152a |
+| 2026-06-16 | Part 4 complete: pipeline #15 SUCCESS end-to-end across all three VMs | |
