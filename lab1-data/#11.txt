@@ -1,0 +1,697 @@
+Started by user admin
+Obtained Jenkinsfile from git https://github.com/yinghui-ren/devops_and_continuous_delivery.git
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/lib/jenkins/workspace/app-pipeline
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+ > git rev-parse --resolve-git-dir /var/lib/jenkins/workspace/app-pipeline/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/yinghui-ren/devops_and_continuous_delivery.git # timeout=10
+Fetching upstream changes from https://github.com/yinghui-ren/devops_and_continuous_delivery.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.34.1'
+ > git fetch --tags --force --progress -- https://github.com/yinghui-ren/devops_and_continuous_delivery.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/yinghui^{commit} # timeout=10
+Checking out Revision 74d5a0054e24177f9f8d454c69e94e223dbe2b73 (refs/remotes/origin/yinghui)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 74d5a0054e24177f9f8d454c69e94e223dbe2b73 # timeout=10
+Commit message: "Keep deployed Node app running after Jenkins build"
+ > git rev-list --no-walk 468cef0fa8c076d8699fe1ee8200ea942f6f26a6 # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] checkout
+Selected Git installation does not exist. Using Default
+The recommended git tool is: NONE
+No credentials specified
+ > git rev-parse --resolve-git-dir /var/lib/jenkins/workspace/app-pipeline/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/yinghui-ren/devops_and_continuous_delivery.git # timeout=10
+Fetching upstream changes from https://github.com/yinghui-ren/devops_and_continuous_delivery.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.34.1'
+ > git fetch --tags --force --progress -- https://github.com/yinghui-ren/devops_and_continuous_delivery.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/yinghui^{commit} # timeout=10
+Checking out Revision 74d5a0054e24177f9f8d454c69e94e223dbe2b73 (refs/remotes/origin/yinghui)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 74d5a0054e24177f9f8d454c69e94e223dbe2b73 # timeout=10
+Commit message: "Keep deployed Node app running after Jenkins build"
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Verify Node)
+[Pipeline] sh
++ node --version
+v22.22.3
++ npm --version
+10.9.8
++ node -e const major = Number(process.versions.node.split('.')[0]); if (major < 22) { throw new Error('Node.js 22 or newer is required'); }
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Install)
+[Pipeline] dir
+Running in /var/lib/jenkins/workspace/app-pipeline/app
+[Pipeline] {
+[Pipeline] sh
++ npm ci
+
+added 219 packages, and audited 220 packages in 28s
+
+37 packages are looking for funding
+  run `npm fund` for details
+
+1 high severity vulnerability
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Test)
+[Pipeline] dir
+Running in /var/lib/jenkins/workspace/app-pipeline/app
+[Pipeline] {
+[Pipeline] sh
++ npm test
+
+> express-locallibrary-tutorial@0.0.1 test
+> node --test
+
+TAP version 13
+# [0mGET /catalog/authors [32m200[0m 318.131 ms - -[0m
+# Subtest: Author Routes
+    # Subtest: Author List Routes
+        # Subtest: GET /catalog/authors
+        ok 1 - GET /catalog/authors
+          ---
+          duration_ms: 406.331295
+          type: 'test'
+          ...
+        1..1
+    ok 1 - Author List Routes
+      ---
+      duration_ms: 679.554941
+      type: 'test'
+      ...
+# [0mGET /catalog/author/6a31b7a4b19d45c817008993 [32m200[0m 101.706 ms - -[0m
+    # Subtest: Author Detail Routes
+        # Subtest: should return author detail page for existing author
+        ok 1 - should return author detail page for existing author
+          ---
+          duration_ms: 145.014197
+          type: 'test'
+          ...
+# [0mGET /catalog/author/64f1e0aa6a429f0f8d0d0d0d [33m404[0m 55.596 ms - -[0m
+        # Subtest: should return 404 for non-existent author
+        ok 2 - should return 404 for non-existent author
+          ---
+          duration_ms: 114.169906
+          type: 'test'
+          ...
+        1..2
+    ok 2 - Author Detail Routes
+      ---
+      duration_ms: 285.17803
+      type: 'test'
+      ...
+# [0mGET /catalog/author/6a31b7a4b19d45c8170089a5/delete [32m200[0m 53.762 ms - -[0m
+    # Subtest: Author Delete Routes
+        # Subtest: should load the author delete confirmation page
+        ok 1 - should load the author delete confirmation page
+          ---
+          duration_ms: 77.352566
+          type: 'test'
+          ...
+# [0mPOST /catalog/author/6a31b7a4b19d45c8170089ad/delete [36m302[0m 34.747 ms - 38[0m
+        # Subtest: should delete the author and redirect to author list
+        ok 2 - should delete the author and redirect to author list
+          ---
+          duration_ms: 69.224433
+          type: 'test'
+          ...
+# [0mPOST /catalog/author/6a31b7a4b19d45c8170089b7/delete [32m200[0m 69.818 ms - -[0m
+        # Subtest: should NOT delete the author if books exist
+        ok 3 - should NOT delete the author if books exist
+          ---
+          duration_ms: 118.97989
+          type: 'test'
+          ...
+        1..3
+    ok 3 - Author Delete Routes
+      ---
+      duration_ms: 276.400665
+      type: 'test'
+      ...
+# [0mGET /catalog/author/create [32m200[0m 60.899 ms - -[0m
+    # Subtest: Author Create Routes
+        # Subtest: should load the author create form
+        ok 1 - should load the author create form
+          ---
+          duration_ms: 76.286707
+          type: 'test'
+          ...
+# [0mPOST /catalog/author/create [36m302[0m 14.022 ms - 62[0m
+        # Subtest: should create a new author and redirect to author detail page
+        ok 2 - should create a new author and redirect to author detail page
+          ---
+          duration_ms: 45.985596
+          type: 'test'
+          ...
+# [0mPOST /catalog/author/create [32m200[0m 44.524 ms - -[0m
+        # Subtest: should re-render the form with errors if required fields are missing
+        ok 3 - should re-render the form with errors if required fields are missing
+          ---
+          duration_ms: 76.998487
+          type: 'test'
+          ...
+        1..3
+    ok 4 - Author Create Routes
+      ---
+      duration_ms: 210.555306
+      type: 'test'
+      ...
+# [0mGET /catalog/author/6a31b7a5b19d45c8170089dc/update [32m200[0m 51.776 ms - -[0m
+    # Subtest: Author Update Routes
+        # Subtest: should render the author update form
+        ok 1 - should render the author update form
+          ---
+          duration_ms: 73.913918
+          type: 'test'
+          ...
+# [0mPOST /catalog/author/6a31b7a5b19d45c8170089e3/update [36m302[0m 13.451 ms - 62[0m
+        # Subtest: should update the author and redirect to detail page
+        ok 2 - should update the author and redirect to detail page
+          ---
+          duration_ms: 36.218609
+          type: 'test'
+          ...
+# [0mPOST /catalog/author/6a31b7a5b19d45c8170089ec/update [32m200[0m 43.027 ms - -[0m
+        # Subtest: should re-render the form with errors if required fields are missing
+        ok 3 - should re-render the form with errors if required fields are missing
+          ---
+          duration_ms: 67.180393
+          type: 'test'
+          ...
+        1..3
+    ok 5 - Author Update Routes
+      ---
+      duration_ms: 191.892082
+      type: 'test'
+      ...
+    1..5
+ok 1 - Author Routes
+  ---
+  duration_ms: 1699.95298
+  type: 'test'
+  ...
+# [0mGET /catalog/books [32m200[0m 318.416 ms - -[0m
+# Subtest: Book Routes
+    # Subtest: Book List Routes
+        # Subtest: GET /catalog/books
+        ok 1 - GET /catalog/books
+          ---
+          duration_ms: 396.75863
+          type: 'test'
+          ...
+        1..1
+    ok 1 - Book List Routes
+      ---
+      duration_ms: 687.886561
+      type: 'test'
+      ...
+# [0mGET /catalog/book/6a31b7a772493d70346f6d21 [32m200[0m 194.883 ms - -[0m
+    # Subtest: Book Detail Routes
+        # Subtest: should return book detail page for existing book
+        ok 1 - should return book detail page for existing book
+          ---
+          duration_ms: 273.282704
+          type: 'test'
+          ...
+# [0mGET /catalog/book/64f1e0aa6a429f0f8d0d0d0d [33m404[0m 47.635 ms - -[0m
+        # Subtest: should return 404 for non-existent book
+        ok 2 - should return 404 for non-existent book
+          ---
+          duration_ms: 68.579002
+          type: 'test'
+          ...
+        1..2
+    ok 2 - Book Detail Routes
+      ---
+      duration_ms: 369.334228
+      type: 'test'
+      ...
+# [0mGET /catalog/book/6a31b7a772493d70346f6d39/delete [32m200[0m 110.023 ms - -[0m
+    # Subtest: Book Delete Routes
+        # Subtest: should load the book delete confirmation page
+        ok 1 - should load the book delete confirmation page
+          ---
+          duration_ms: 152.388269
+          type: 'test'
+          ...
+# [0mPOST /catalog/book/6a31b7a772493d70346f6d47/delete [36m302[0m 50.438 ms - 36[0m
+        # Subtest: should delete the book and redirect to book list
+        ok 2 - should delete the book and redirect to book list
+          ---
+          duration_ms: 98.928124
+          type: 'test'
+          ...
+# [0mPOST /catalog/book/6a31b7a872493d70346f6d57/delete [32m200[0m 71.782 ms - -[0m
+        # Subtest: should NOT delete the Book if BookInstances exist
+        ok 3 - should NOT delete the Book if BookInstances exist
+          ---
+          duration_ms: 110.240933
+          type: 'test'
+          ...
+        1..3
+    ok 3 - Book Delete Routes
+      ---
+      duration_ms: 378.928243
+      type: 'test'
+      ...
+# [0mGET /catalog/book/create [32m200[0m 102.722 ms - -[0m
+    # Subtest: Book Create Routes
+        # Subtest: should load the book create form
+        ok 1 - should load the book create form
+          ---
+          duration_ms: 129.061602
+          type: 'test'
+          ...
+# [0mPOST /catalog/book/create [36m302[0m 15.107 ms - 60[0m
+        # Subtest: should create a new book and redirect to book detail page
+        ok 2 - should create a new book and redirect to book detail page
+          ---
+          duration_ms: 48.375332
+          type: 'test'
+          ...
+# [0mPOST /catalog/book/create [32m200[0m 68.521 ms - -[0m
+        # Subtest: should re-render form with errors if required fields are missing
+        ok 3 - should re-render form with errors if required fields are missing
+          ---
+          duration_ms: 103.697799
+          type: 'test'
+          ...
+        1..3
+    ok 4 - Book Create Routes
+      ---
+      duration_ms: 291.903542
+      type: 'test'
+      ...
+# [0mGET /catalog/book/6a31b7a872493d70346f6d90/update [32m200[0m 71.288 ms - -[0m
+    # Subtest: Book Update Routes
+        # Subtest: should render the book update form
+        ok 1 - should render the book update form
+          ---
+          duration_ms: 110.154202
+          type: 'test'
+          ...
+# [0mPOST /catalog/book/6a31b7a872493d70346f6d9e/update [36m302[0m 15.427 ms - 60[0m
+        # Subtest: should update the book and redirect to detail page
+        ok 2 - should update the book and redirect to detail page
+          ---
+          duration_ms: 53.38045
+          type: 'test'
+          ...
+# [0mPOST /catalog/book/6a31b7a872493d70346f6dab/update [32m200[0m 69.208 ms - -[0m
+        # Subtest: should re-render form with errors if required fields are missing
+        ok 3 - should re-render form with errors if required fields are missing
+          ---
+          duration_ms: 105.744154
+          type: 'test'
+          ...
+        1..3
+    ok 5 - Book Update Routes
+      ---
+      duration_ms: 296.119815
+      type: 'test'
+      ...
+    1..5
+ok 2 - Book Routes
+  ---
+  duration_ms: 2069.275429
+  type: 'test'
+  ...
+# [0mGET /catalog/bookinstances [32m200[0m 348.886 ms - -[0m
+# Subtest: BookInstance Routes
+    # Subtest: BookInstance List Routes
+        # Subtest: GET /catalog/bookinstances
+        ok 1 - GET /catalog/bookinstances
+          ---
+          duration_ms: 436.624635
+          type: 'test'
+          ...
+        1..1
+    ok 1 - BookInstance List Routes
+      ---
+      duration_ms: 733.848358
+      type: 'test'
+      ...
+# [0mGET /catalog/bookinstance/6a31b7aab65ad823beeefc4c [32m200[0m 123.802 ms - -[0m
+    # Subtest: BookInstance Detail Routes
+        # Subtest: should return BookInstance detail page for existing instance
+        ok 1 - should return BookInstance detail page for existing instance
+          ---
+          duration_ms: 212.663548
+          type: 'test'
+          ...
+# [0mGET /catalog/bookinstance/64f1e0aa6a429f0f8d0d0d0d [33m404[0m 57.624 ms - -[0m
+        # Subtest: should return 404 for non-existent BookInstance
+        ok 2 - should return 404 for non-existent BookInstance
+          ---
+          duration_ms: 90.630504
+          type: 'test'
+          ...
+        1..2
+    ok 2 - BookInstance Detail Routes
+      ---
+      duration_ms: 327.268096
+      type: 'test'
+      ...
+# [0mGET /catalog/bookinstance/6a31b7abb65ad823beeefc63/delete [32m200[0m 65.553 ms - -[0m
+    # Subtest: BookInstance Delete Routes
+        # Subtest: should load the BookInstance delete confirmation page
+        ok 1 - should load the BookInstance delete confirmation page
+          ---
+          duration_ms: 108.76333
+          type: 'test'
+          ...
+# [0mPOST /catalog/bookinstance/6a31b7abb65ad823beeefc71/delete [36m302[0m 21.637 ms - 44[0m
+        # Subtest: should delete the BookInstance and redirect to BookInstance list
+        ok 2 - should delete the BookInstance and redirect to BookInstance list
+          ---
+          duration_ms: 70.936922
+          type: 'test'
+          ...
+        1..2
+    ok 3 - BookInstance Delete Routes
+      ---
+      duration_ms: 191.273985
+      type: 'test'
+      ...
+# [0mGET /catalog/bookinstance/create [32m200[0m 132.527 ms - -[0m
+    # Subtest: BookInstance Create Routes
+        # Subtest: should render the BookInstance creation form
+        ok 1 - should render the BookInstance creation form
+          ---
+          duration_ms: 162.936623
+          type: 'test'
+          ...
+# [0mPOST /catalog/bookinstance/create [36m302[0m 20.039 ms - 68[0m
+        # Subtest: should create a new BookInstance and redirect to detail
+        ok 2 - should create a new BookInstance and redirect to detail
+          ---
+          duration_ms: 60.452184
+          type: 'test'
+          ...
+# [0mPOST /catalog/bookinstance/create [32m200[0m 101.595 ms - -[0m
+        # Subtest: should re-render the form with errors if (most) required fields are missing
+        ok 3 - should re-render the form with errors if (most) required fields are missing
+          ---
+          duration_ms: 131.496129
+          type: 'test'
+          ...
+        1..3
+    ok 4 - BookInstance Create Routes
+      ---
+      duration_ms: 368.414612
+      type: 'test'
+      ...
+# [0mGET /catalog/bookinstance/6a31b7abb65ad823beeefcab/update [32m200[0m 76.111 ms - -[0m
+    # Subtest: BookInstance Update Routes
+        # Subtest: should render the bookinstance update form
+        ok 1 - should render the bookinstance update form
+          ---
+          duration_ms: 115.075854
+          type: 'test'
+          ...
+# [0mPOST /catalog/bookinstance/6a31b7abb65ad823beeefcba/update [36m302[0m 12.559 ms - 68[0m
+        # Subtest: should update the bookinstance and redirect to detail page
+        ok 2 - should update the bookinstance and redirect to detail page
+          ---
+          duration_ms: 65.241296
+          type: 'test'
+          ...
+# [0mPOST /catalog/bookinstance/6a31b7abb65ad823beeefcc9/update [32m200[0m 84.434 ms - -[0m
+        # Subtest: should re-render form with errors if required fields are missing
+        ok 3 - should re-render form with errors if required fields are missing
+          ---
+          duration_ms: 118.718158
+          type: 'test'
+          ...
+        1..3
+    ok 5 - BookInstance Update Routes
+      ---
+      duration_ms: 318.546396
+      type: 'test'
+      ...
+    1..5
+ok 3 - BookInstance Routes
+  ---
+  duration_ms: 1999.608401
+  type: 'test'
+  ...
+# [0mGET /catalog [32m200[0m 316.841 ms - -[0m
+# Subtest: Catalog Routes
+    # Subtest: Catalog List Routes
+        # Subtest: GET /catalog
+        ok 1 - GET /catalog
+          ---
+          duration_ms: 488.355867
+          type: 'test'
+          ...
+# [0mGET /catalog/unknown [33m404[0m 65.461 ms - -[0m
+        # Subtest: GET /catalog/unknown
+        ok 2 - GET /catalog/unknown
+          ---
+          duration_ms: 96.764866
+          type: 'test'
+          ...
+        1..2
+    ok 1 - Catalog List Routes
+      ---
+      duration_ms: 883.435505
+      type: 'test'
+      ...
+    1..1
+ok 4 - Catalog Routes
+  ---
+  duration_ms: 955.199297
+  type: 'test'
+  ...
+# [0mGET /catalog/genres [32m200[0m 359.448 ms - -[0m
+# Subtest: Genre Routes
+    # Subtest: Genre List Route
+        # Subtest: GET /catalog/genres
+        ok 1 - GET /catalog/genres
+          ---
+          duration_ms: 435.538084
+          type: 'test'
+          ...
+        1..1
+    ok 1 - Genre List Route
+      ---
+      duration_ms: 716.157861
+      type: 'test'
+      ...
+# [0mGET /catalog/genre/6a31b7b04e280ebc7110dcaa [32m200[0m 105.168 ms - -[0m
+    # Subtest: Genre Detail Routes
+        # Subtest: should return genre detail page for existing genre
+        ok 1 - should return genre detail page for existing genre
+          ---
+          duration_ms: 147.826975
+          type: 'test'
+          ...
+# [0mGET /catalog/genre/64f1e0aa6a429f0f8d0d0d0d [33m404[0m 65.218 ms - -[0m
+        # Subtest: should return 404 for non-existent genre
+        ok 2 - should return 404 for non-existent genre
+          ---
+          duration_ms: 133.644064
+          type: 'test'
+          ...
+        1..2
+    ok 2 - Genre Detail Routes
+      ---
+      duration_ms: 305.516281
+      type: 'test'
+      ...
+# [0mGET /catalog/genre/6a31b7b04e280ebc7110dcbc/delete [32m200[0m 64.179 ms - -[0m
+    # Subtest: Genre Delete Routes
+        # Subtest: should load the genre delete confirmation page
+        ok 1 - should load the genre delete confirmation page
+          ---
+          duration_ms: 97.238393
+          type: 'test'
+          ...
+# [0mPOST /catalog/genre/6a31b7b04e280ebc7110dcc4/delete [36m302[0m 23.057 ms - 37[0m
+        # Subtest: should delete the genre and redirect to genre list
+        ok 2 - should delete the genre and redirect to genre list
+          ---
+          duration_ms: 55.7185
+          type: 'test'
+          ...
+# [0mPOST /catalog/genre/6a31b7b04e280ebc7110dcce/delete [32m200[0m 25.134 ms - -[0m
+        # Subtest: should NOT delete the genre if books use it
+        ok 3 - should NOT delete the genre if books use it
+          ---
+          duration_ms: 61.043275
+          type: 'test'
+          ...
+        1..3
+    ok 3 - Genre Delete Routes
+      ---
+      duration_ms: 226.206299
+      type: 'test'
+      ...
+# [0mGET /catalog/genre/create [32m200[0m 50.218 ms - -[0m
+    # Subtest: Genre Create Routes
+        # Subtest: should load the genre create form
+        ok 1 - should load the genre create form
+          ---
+          duration_ms: 69.597646
+          type: 'test'
+          ...
+# [0mPOST /catalog/genre/create [36m302[0m 23.833 ms - 61[0m
+        # Subtest: should create a new genre and redirect to genre list
+        ok 2 - should create a new genre and redirect to genre list
+          ---
+          duration_ms: 72.306156
+          type: 'test'
+          ...
+# [0mPOST /catalog/genre/create [32m200[0m 32.301 ms - -[0m
+        # Subtest: should re-render form with errors if genre name is missing
+        ok 3 - should re-render form with errors if genre name is missing
+          ---
+          duration_ms: 62.537858
+          type: 'test'
+          ...
+        1..3
+    ok 4 - Genre Create Routes
+      ---
+      duration_ms: 212.959835
+      type: 'test'
+      ...
+# [0mGET /catalog/genre/6a31b7b04e280ebc7110dcf4/update [32m200[0m 53.051 ms - -[0m
+    # Subtest: Genre Update Routes
+        # Subtest: should load the genre update form
+        ok 1 - should load the genre update form
+          ---
+          duration_ms: 79.312402
+          type: 'test'
+          ...
+# [0mPOST /catalog/genre/6a31b7b04e280ebc7110dcfb/update [36m302[0m 15.866 ms - 61[0m
+        # Subtest: should update the genre and redirect to detail page
+        ok 2 - should update the genre and redirect to detail page
+          ---
+          duration_ms: 46.586583
+          type: 'test'
+          ...
+# [0mPOST /catalog/genre/6a31b7b14e280ebc7110dd04/update [32m200[0m 33.280 ms - -[0m
+        # Subtest: should re-render the form with errors if name is missing
+        ok 3 - should re-render the form with errors if name is missing
+          ---
+          duration_ms: 63.109122
+          type: 'test'
+          ...
+        1..3
+    ok 5 - Genre Update Routes
+      ---
+      duration_ms: 202.572331
+      type: 'test'
+      ...
+    1..5
+ok 5 - Genre Routes
+  ---
+  duration_ms: 1756.041612
+  type: 'test'
+  ...
+# [0mGET / [36m302[0m 7.281 ms - 30[0m
+# Subtest: Index Routes
+    # Subtest: GET /
+        # Subtest: should return 302 Found and redirect to catalog
+        ok 1 - should return 302 Found and redirect to catalog
+          ---
+          duration_ms: 61.758813
+          type: 'test'
+          ...
+        1..1
+    ok 1 - GET /
+      ---
+      duration_ms: 65.68961
+      type: 'test'
+      ...
+    1..1
+ok 6 - Index Routes
+  ---
+  duration_ms: 66.489817
+  type: 'test'
+  ...
+# Subtest: test/utils/test_db.mjs
+ok 7 - test/utils/test_db.mjs
+  ---
+  duration_ms: 838.690584
+  type: 'test'
+  ...
+1..7
+# tests 79
+# suites 0
+# pass 79
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17063.463808
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Deploy)
+[Pipeline] dir
+Running in /var/lib/jenkins/workspace/app-pipeline/app
+[Pipeline] {
+[Pipeline] sh
++ pkill -f node ./bin/www
++ true
++ sleep 2
++ echo Waiting for application to start...
+Waiting for application to start...
++ sleep 10
++ nohup env BUILD_ID=dontKillMe JENKINS_NODE_COOKIE=dontKillMe PORT=8081 npm start
++ pgrep -af node ./bin/www
+4219 sh -c node ./bin/www
+4220 node ./bin/www
+[Pipeline] }
+[Pipeline] // dir
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Verify)
+[Pipeline] sh
++ curl --fail --silent --max-time 10 http://localhost:8081/catalog
+<!DOCTYPE html><html lang="en"><head><title>Local Library Home</title><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous"><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script><link rel="stylesheet" href="/stylesheets/style.css"></head><body><div class="container-fluid"><div class="row"><div class="col-sm-2"><ul class="sidebar-nav"><li><a href="/catalog">Home</a></li><li><a href="/catalog/books">All books</a></li><li><a href="/catalog/authors">All authors</a></li><li><a href="/catalog/genres">All genres</a></li><li><a href="/catalog/bookinstances">All book-instances</a></li><li><hr></li><li><a href="/catalog/author/create">Create new author</a></li><li><a href="/catalog/genre/create">Create new genre</a></li><li><a href="/catalog/book/create">Create new book</a></li><li><a href="/catalog/bookinstance/create">Create new book instance (copy)</a></li></ul></div><div class="col-sm-10"><h1>Local Library Home</h1><p>Welcome to <em>LocalLibrary</em>, a very basic Express website developed as a tutorial example on the Mozilla Developer Network.</p><h1>Dynamic content</h1><p>The library has the following record counts:</p><ul><li><strong>Books:</strong> 35</li><li><strong>Copies:</strong> 41</li><li><strong>Copies available:</strong> 18</li><li><strong>Authors:</strong> 33</li><li><strong>Genres:</strong> 21</li></ul></div></div></div></body></html>+ echo Application is running at http://localhost:8081/catalog
+Application is running at http://localhost:8081/catalog
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+Finished: SUCCESS
