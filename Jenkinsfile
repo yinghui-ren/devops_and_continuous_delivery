@@ -53,34 +53,23 @@ pipeline {
                         keyFileVariable: 'DEPLOY_KEY',
                         usernameVariable: 'DEPLOY_USER')]) {
                     sh '''
-                        JAR_FILE=$(ls ${APP_JAR})
-
-                        # The credential's private key can pick up CRLF line
-                        # endings when pasted through a browser textarea on
-                        # Windows. The Java-based SSH launcher tolerates that,
-                        # but the system OpenSSH client (used below) does
-                        # not and fails with "error in libcrypto". Normalize
-                        # to LF and tighten permissions before using it.
-                        sed -i 's/\\r$//' "$DEPLOY_KEY"
                         chmod 600 "$DEPLOY_KEY"
-
-                        echo "--- DEBUG: key diagnostics (no secret content) ---"
-                        wc -l "$DEPLOY_KEY"
-                        wc -c "$DEPLOY_KEY"
-                        head -c 40 "$DEPLOY_KEY" | od -c | head -5
-                        ssh-keygen -y -f "$DEPLOY_KEY" || echo "ssh-keygen FAILED to parse key"
-                        echo "--- END DEBUG ---"
+                        JAR_FILE=$(ls ${APP_JAR})
+                        SSH="ssh -o StrictHostKeyChecking=no -i $DEPLOY_KEY $DEPLOY_USER@$DEPLOY_HOST"
 
                         scp -o StrictHostKeyChecking=no -i $DEPLOY_KEY \
                             "$JAR_FILE" \
                             $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/app.jar
 
-                        ssh -o StrictHostKeyChecking=no -i $DEPLOY_KEY \
-                            $DEPLOY_USER@$DEPLOY_HOST \
-                            "pkill -f $DEPLOY_DIR/app.jar || true; \
-                             sleep 2; \
-                             nohup java -jar $DEPLOY_DIR/app.jar --server.port=${APP_PORT} \
-                                 > $DEPLOY_DIR/app.log 2>&1 & disown"
+                        # Stop any previous instance (ignore failure if none running)
+                        $SSH "pkill -f $DEPLOY_DIR/app.jar || true"
+                        sleep 2
+
+                        # Start the app in the background. nohup + redirected
+                        # stdin/stdout/stderr is enough to detach it cleanly;
+                        # no job-control ("disown") needed on a non-interactive
+                        # ssh session.
+                        $SSH "nohup java -jar $DEPLOY_DIR/app.jar --server.port=${APP_PORT} > $DEPLOY_DIR/app.log 2>&1 < /dev/null &"
 
                         echo "Waiting for application to start..."
                         sleep 20
