@@ -2,77 +2,73 @@ pipeline {
     agent any
 
     environment {
+        APP_DIR = "app"
         APP_PORT = "8081"
-        APP_JAR  = "target/spring-petclinic-*.jar"
+        APP_LOG = "/tmp/local-library.log"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/spring-projects/spring-petclinic.git',
-                    branch: 'main'
+                checkout scm
             }
         }
 
-        stage('Build') {
+        stage('Verify Node') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh '''
+                    node --version
+                    npm --version
+                    node -e "const major = Number(process.versions.node.split('.')[0]); if (major < 22) { throw new Error('Node.js 22 or newer is required'); }"
+                '''
             }
-            post {
-                success { echo 'Build succeeded.' }
-                failure { error 'Build failed — check Maven output above.' }
+        }
+
+        stage('Install') {
+            steps {
+                dir("${APP_DIR}") {
+                    sh 'npm ci'
+                }
             }
         }
 
         stage('Test') {
             steps {
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    junit testResults: 'target/surefire-reports/*.xml',
-                          allowEmptyResults: true
+                dir("${APP_DIR}") {
+                    sh 'npm test'
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                sh '''
-                    # Stop any previous instance
-                    pkill -f "spring-petclinic" || true
-                    sleep 2
+                dir("${APP_DIR}") {
+                    sh '''
+                        pkill -f "node ./bin/www" || true
+                        sleep 2
 
-                    # Start the application in the background
-                    nohup java -jar ${APP_JAR} \
-                        --server.port=${APP_PORT} \
-                        > /tmp/petclinic.log 2>&1 &
+                        nohup env PORT=${APP_PORT} npm start > ${APP_LOG} 2>&1 &
 
-                    echo "Waiting for application to start..."
-                    sleep 20
-                '''
+                        echo "Waiting for application to start..."
+                        sleep 10
+                    '''
+                }
             }
         }
 
         stage('Verify') {
             steps {
                 sh '''
-                    echo "Checking application health..."
-                    curl --fail --silent --max-time 10 http://localhost:${APP_PORT}/actuator/health \
-                        || curl --fail --silent --max-time 10 http://localhost:${APP_PORT}/
-                    echo "Application is running at http://localhost:${APP_PORT}"
+                    curl --fail --silent --max-time 10 http://localhost:${APP_PORT}/catalog
+                    echo "Application is running at http://localhost:${APP_PORT}/catalog"
                 '''
             }
         }
     }
 
     post {
-        success {
-            echo "Pipeline completed successfully. Access the app at http://localhost:${APP_PORT}"
-        }
         failure {
-            echo "Pipeline failed. Check the logs above for details."
-            sh 'cat /tmp/petclinic.log || true'
+            sh 'cat ${APP_LOG} || true'
         }
     }
 }

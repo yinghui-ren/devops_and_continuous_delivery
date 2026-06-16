@@ -3,7 +3,7 @@ Vagrant.configure("2") do |config|
 
   # Port forwarding: Jenkins UI and deployed app
   config.vm.network "forwarded_port", guest: 8080, host: 8888, host_ip: "127.0.0.1"   # Jenkins
-  config.vm.network "forwarded_port", guest: 8081, host: 8081, host_ip: "127.0.0.1"   # PetClinic app
+  config.vm.network "forwarded_port", guest: 8081, host: 8081, host_ip: "127.0.0.1"   # Node/Express app
   config.vm.network "forwarded_port", guest: 22,   host: 2222, id: "ssh", auto_correct: true
 
   config.vm.provider "virtualbox" do |vb|
@@ -29,6 +29,12 @@ Vagrant.configure("2") do |config|
     echo "=== Installing base tools ==="
     apt-get install -y git curl wget gnupg ca-certificates fontconfig
 
+    echo "=== Installing Node.js 22 ==="
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+    apt-get install -y nodejs
+    node --version
+    npm --version
+
     echo "=== Installing Jenkins ==="
     mkdir -p /etc/apt/keyrings
     wget -O /etc/apt/keyrings/jenkins-keyring.asc \
@@ -49,6 +55,6 @@ Vagrant.configure("2") do |config|
 
     echo "=== Provisioning complete ==="
     echo "Jenkins: http://localhost:8888"
-    echo "App:     http://localhost:8081"
+    echo "App:     http://localhost:8081/catalog"
   SHELL
 end
