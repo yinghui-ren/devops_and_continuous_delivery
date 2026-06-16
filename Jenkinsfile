@@ -48,10 +48,15 @@ pipeline {
                         pkill -f "node ./bin/www" || true
                         sleep 2
 
-                        nohup env PORT=${APP_PORT} npm start > ${APP_LOG} 2>&1 &
+                        nohup env \
+                            BUILD_ID=dontKillMe \
+                            JENKINS_NODE_COOKIE=dontKillMe \
+                            PORT=${APP_PORT} \
+                            npm start > ${APP_LOG} 2>&1 &
 
                         echo "Waiting for application to start..."
                         sleep 10
+                        pgrep -af "node ./bin/www"
                     '''
                 }
             }
