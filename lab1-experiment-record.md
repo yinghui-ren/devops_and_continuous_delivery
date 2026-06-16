@@ -153,14 +153,30 @@ curl http://localhost:8081
 | PetClinic app | 8081 | 8081 |
 | SSH | 22 | 2222 |
 
-SSH from Windows: `ssh -p 2222 vagrant@127.0.0.1` (password: `vagrant`)
+SSH from Windows: `ssh -i .vagrant\machines\default\virtualbox\private_key -p 2222 vagrant@127.0.0.1`
 Or simply: `vagrant ssh`
+
+Verified with `vagrant port`:
+```
+22 (guest) => 2222 (host)
+8080 (guest) => 8080 (host)
+8081 (guest) => 8081 (host)
+```
+
+### Synced Folder
+
+Vagrant's default synced folder maps the project directory (where the
+Vagrantfile lives) to `/vagrant` inside the VM automatically — no extra
+config needed. Verified bidirectionally: a file created on the Windows
+host with a plain redirect appeared instantly inside the VM at
+`/vagrant/<file>`.
 
 ## 9. Problems and Solutions
 
 | Date | Problem | Cause | Solution | Result |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| 2026-06-02 | `vagrant up` failed: `Job for jenkins.service failed` | Jenkins LTS (>=2.426) requires Java 21+; Vagrantfile installed Java 17 | Installed `openjdk-21-jdk`, `systemctl reset-failed jenkins`, `systemctl start jenkins`; updated Vagrantfile to install Java 21 from the start | Resolved |
+| 2026-06-16 | `vagrant ssh -c "..."` failed with "Identity file ... not accessible" / Permission denied | Project path contains Chinese characters and spaces, which the bundled Vagrant SSH client mis-parses on Windows | Call `ssh -i <private_key_path> -p 2222 vagrant@127.0.0.1 "<cmd>"` directly instead of `vagrant ssh -c` | Resolved |
 
 ## 10. Progress Log
 
@@ -168,3 +184,5 @@ Or simply: `vagrant ssh`
 | --- | --- | --- |
 | 2026-06-02 | Created Git repository and prepared lab record document. | |
 | 2026-06-02 | Added Vagrantfile, Jenkinsfile, updated experiment record. | |
+| 2026-06-02 | Fixed Jenkins Java version issue; pipeline ran successfully end-to-end (Checkout/Build/Test/Deploy/Verify), app reachable at http://localhost:8081 | |
+| 2026-06-16 | Verified synced folder (/vagrant) and port forwarding (8080/8081/2222); started Part 4 (network improvements, second VM as agent, third VM as deploy target) | |

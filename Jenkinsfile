@@ -1,9 +1,13 @@
 pipeline {
-    agent any
+    // Build and test run on the registered SSH agent node, not on the
+    // Jenkins controller (master).
+    agent { label 'agent-vm' }
 
     environment {
-        APP_PORT = "8081"
-        APP_JAR  = "target/spring-petclinic-*.jar"
+        APP_PORT    = "8081"
+        APP_JAR     = "target/spring-petclinic-*.jar"
+        DEPLOY_HOST = "192.168.56.12"
+        DEPLOY_DIR  = "/home/vagrant/app"
     }
 
     stages {
@@ -38,29 +42,40 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh '''
-                    # Stop any previous instance
-                    pkill -f "spring-petclinic" || true
-                    sleep 2
+                // Copy the freshly built JAR to the dedicated deploy VM and
+                // (re)start the application there over SSH.
+                withCredentials([sshUserPrivateKey(
+                        credentialsId: 'deploy-vm-ssh',
+                        keyFileVariable: 'DEPLOY_KEY',
+                        usernameVariable: 'DEPLOY_USER')]) {
+                    sh '''
+                        JAR_FILE=$(ls ${APP_JAR})
 
-                    # Start the application in the background
-                    nohup java -jar ${APP_JAR} \
-                        --server.port=${APP_PORT} \
-                        > /tmp/petclinic.log 2>&1 &
+                        scp -o StrictHostKeyChecking=no -i $DEPLOY_KEY \
+                            "$JAR_FILE" \
+                            $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/app.jar
 
-                    echo "Waiting for application to start..."
-                    sleep 20
-                '''
+                        ssh -o StrictHostKeyChecking=no -i $DEPLOY_KEY \
+                            $DEPLOY_USER@$DEPLOY_HOST \
+                            "pkill -f $DEPLOY_DIR/app.jar || true; \
+                             sleep 2; \
+                             nohup java -jar $DEPLOY_DIR/app.jar --server.port=${APP_PORT} \
+                                 > $DEPLOY_DIR/app.log 2>&1 & disown"
+
+                        echo "Waiting for application to start..."
+                        sleep 20
+                    '''
+                }
             }
         }
 
         stage('Verify') {
             steps {
                 sh '''
-                    echo "Checking application health..."
-                    curl --fail --silent --max-time 10 http://localhost:${APP_PORT}/actuator/health \
-                        || curl --fail --silent --max-time 10 http://localhost:${APP_PORT}/
-                    echo "Application is running at http://localhost:${APP_PORT}"
+                    echo "Checking application health on $DEPLOY_HOST..."
+                    curl --fail --silent --max-time 10 http://$DEPLOY_HOST:${APP_PORT}/actuator/health \
+                        || curl --fail --silent --max-time 10 http://$DEPLOY_HOST:${APP_PORT}/
+                    echo "Application is running at http://$DEPLOY_HOST:${APP_PORT}"
                 '''
             }
         }
@@ -68,11 +83,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline completed successfully. Access the app at http://localhost:${APP_PORT}"
+            echo "Pipeline completed successfully. Access the app from the Windows host at http://localhost:8081 (forwarded from the deploy VM)."
         }
         failure {
-            echo "Pipeline failed. Check the logs above for details."
-            sh 'cat /tmp/petclinic.log || true'
+            echo "Pipeline failed. Check the Console Output above for details."
         }
     }
 }
