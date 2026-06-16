@@ -49,7 +49,7 @@ pipeline {
                 // same credential works for both the agent connector and
                 // this SSH/SCP deploy step.
                 withCredentials([sshUserPrivateKey(
-                        credentialsId: 'agent-vm-ssh',
+                        credentialsId: 'deploy-vm-ssh-clean',
                         keyFileVariable: 'DEPLOY_KEY',
                         usernameVariable: 'DEPLOY_USER')]) {
                     sh '''
