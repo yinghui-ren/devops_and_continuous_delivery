@@ -29,6 +29,11 @@ Vagrant.configure("2") do |config|
     echo "=== Installing base tools ==="
     apt-get install -y git curl wget gnupg ca-certificates fontconfig
 
+    echo "=== Installing OpenSSL 1.1 compatibility library for MongoDB tests ==="
+    wget -O /tmp/libssl1.1.deb \
+      http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb
+    apt-get install -y /tmp/libssl1.1.deb
+
     echo "=== Installing Node.js 22 ==="
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get install -y nodejs
