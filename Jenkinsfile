@@ -61,15 +61,16 @@ pipeline {
                             "$JAR_FILE" \
                             $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_DIR/app.jar
 
-                        # Stop any previous instance (ignore failure if none running)
-                        $SSH "pkill -f $DEPLOY_DIR/app.jar || true"
+                        # Stop any previous instance via its recorded PID file.
+                        # (Deliberately NOT "pkill -f .../app.jar": pkill's own
+                        # invocation argv contains that same search string, so
+                        # it ends up matching and killing itself, which made
+                        # the ssh channel exit by signal -> exit code 255.)
+                        $SSH "if [ -f $DEPLOY_DIR/app.pid ]; then kill \$(cat $DEPLOY_DIR/app.pid) 2>/dev/null || true; rm -f $DEPLOY_DIR/app.pid; fi"
                         sleep 2
 
-                        # Start the app in the background. nohup + redirected
-                        # stdin/stdout/stderr is enough to detach it cleanly;
-                        # no job-control ("disown") needed on a non-interactive
-                        # ssh session.
-                        $SSH "nohup java -jar $DEPLOY_DIR/app.jar --server.port=${APP_PORT} > $DEPLOY_DIR/app.log 2>&1 < /dev/null &"
+                        # Start the app in the background and record its PID.
+                        $SSH "nohup java -jar $DEPLOY_DIR/app.jar --server.port=${APP_PORT} > $DEPLOY_DIR/app.log 2>&1 < /dev/null & echo \$! > $DEPLOY_DIR/app.pid"
 
                         echo "Waiting for application to start..."
                         sleep 20
