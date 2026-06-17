@@ -1,0 +1,24 @@
+services:
+  mongodb:
+    image: mongo:4.4
+    container_name: local-library-mongodb
+    restart: unless-stopped
+    volumes:
+      - local-library-mongodb:/data/db
+
+  app:
+    build: .
+    image: local-library:1.0
+    container_name: local-library
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGODB_URI: mongodb://mongodb:27017/local_library
+    ports:
+      - "8082:3000"
+
+volumes:
+  local-library-mongodb:

@@ -1,0 +1,49 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+
+  config.vm.hostname = "lab2-docker"
+  config.vm.network "forwarded_port", guest: 8082, host: 8083, host_ip: "127.0.0.1", auto_correct: true
+  config.vm.network "forwarded_port", guest: 22, host: 2223, id: "ssh", auto_correct: true
+
+  config.vm.synced_folder "..", "/vagrant"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "lab2-docker"
+    vb.memory = "2048"
+    vb.cpus = 2
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+
+    echo "=== Updating package index ==="
+    apt-get update -y
+
+    echo "=== Installing Docker prerequisites ==="
+    apt-get install -y ca-certificates curl gnupg
+    install -m 0755 -d /etc/apt/keyrings
+
+    echo "=== Installing Docker apt repository ==="
+    rm -f /etc/apt/keyrings/docker.gpg
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+      | gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
+
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+      | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    echo "=== Installing Docker Engine ==="
+    apt-get update -y
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    usermod -aG docker vagrant
+    systemctl enable docker
+    systemctl start docker
+
+    echo "=== Docker installation complete ==="
+    docker --version
+  SHELL
+end

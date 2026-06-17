@@ -23,13 +23,6 @@ const dev_db_url =
   "mongodb+srv://cooluser:coolpassword@cluster0.cojoign.mongodb.net/local_library?retryWrites=true&w=majority&appName=Cluster0";
 const mongoDB = process.env.MONGODB_URI || dev_db_url;
 
-try {
-  connectMongoose();
-} catch (err) {
-  console.error("Failed to connect to MongoDB:", err);
-  process.exit(1);
-}
-
 async function connectMongoose() {
   await mongoose.connect(mongoDB);
   
@@ -44,18 +37,24 @@ async function connectMongoose() {
 }
 
 /**
- * Create HTTP server.
+ * Create HTTP server after MongoDB is ready.
  */
 
-var server = http.createServer(app);
+async function startServer() {
+  try {
+    await connectMongoose();
+  } catch (err) {
+    console.error("Failed to connect to MongoDB:", err);
+    process.exit(1);
+  }
 
-/**
- * Listen on provided port, on all network interfaces.
- */
+  var server = http.createServer(app);
+  server.listen(port);
+  server.on("error", onError);
+  server.on("listening", onListening);
+}
 
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
+startServer();
 
 /**
  * Event listener for HTTP server "error" event.
@@ -88,7 +87,7 @@ function onError(error) {
  */
 
 function onListening() {
-  var addr = server.address();
+  var addr = this.address();
   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
   debug("Listening on " + bind);
 }
