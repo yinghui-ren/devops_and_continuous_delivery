@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('1. Récupération du Code') {
+            steps {
+                echo 'Téléchargement de l\'application de bibliothèque depuis GitHub...'
+                // Jenkins clone directement ton dépôt public
+                git branch: 'main', url: 'https://github.com/chealeanpenhchakrith/express-locallibrary-tutorial.git'
+            }
+        }
+
+        stage('2. Installation') {
+            steps {
+                echo 'Installation des dépendances Node.js...'
+                sh 'npm install'
+            }
+        }
+
+        stage('3. Tests Exécutables') {
+            steps {
+                echo 'Lancement des tests avec la base de données en mémoire...'
+                sh 'npm test'
+            }
+        }
+
+        stage('4. Déploiement Local') {
+            steps {
+                echo 'Lancement de l\'application en tâche de fond sur le port 3000...'
+                sh 'BUILD_ID=dontKillMe PORT=3000 npm start &'
+            }
+        }
+    }
+}
