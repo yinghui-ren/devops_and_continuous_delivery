@@ -8,13 +8,14 @@ Vagrant.configure("2") do |config|
     vm1.vm.hostname = "lab3-ansible-master"
 
     vm1.vm.network "private_network", ip: "192.168.58.10"
+    vm1.vm.network "forwarded_port", guest: 8080, host: 8095   # Jenkins UI
     vm1.vm.network "forwarded_port", guest: 22, host: 2212, id: "ssh", auto_correct: true
 
     vm1.vm.synced_folder ".", "/vagrant"
 
     vm1.vm.provider "virtualbox" do |vb|
       vb.name   = "lab3-vm1-ansible-master"
-      vb.memory = "2048"
+      vb.memory = "3072"
       vb.cpus   = 2
     end
 
@@ -24,6 +25,9 @@ Vagrant.configure("2") do |config|
 
       echo "=== Updating system packages ==="
       apt-get update -y
+
+      echo "=== Installing Java 21 (Jenkins >= 2.426 requires Java 21+) ==="
+      apt-get install -y openjdk-21-jdk
 
       echo "=== Installing Ansible ==="
       apt-get install -y ansible
@@ -35,6 +39,17 @@ Vagrant.configure("2") do |config|
       sudo -u vagrant ssh-keygen -t rsa -b 2048 -f /home/vagrant/.ssh/id_rsa -N "" || true
       # Save the public key to /vagrant so VM2 can read it during its provisioning
       cp /home/vagrant/.ssh/id_rsa.pub /vagrant/id_rsa_vm1.pub
+
+      echo "=== Installing Jenkins ==="
+      curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key \
+        | tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+      echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+        https://pkg.jenkins.io/debian-stable binary/" \
+        | tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+      apt-get update -y
+      apt-get install -y jenkins
+      systemctl enable jenkins
+      systemctl start jenkins
 
       echo "=== Setting up Ansible working directory (non-world-writable) ==="
       mkdir -p /home/vagrant/ansible-lab3/playbooks

@@ -1,0 +1,48 @@
+---
+# Lab 3 MEDIUM — Deploy Grafana using Ansible Galaxy role
+# Role source: cloudalchemy.grafana (from Ansible Galaxy)
+#
+# Prerequisites:
+#   ansible-galaxy install -r playbooks/galaxy-requirements.yml
+# Usage:
+#   ansible-playbook playbooks/galaxy-grafana.yml
+
+- name: Deploy Grafana using Ansible Galaxy role (cloudalchemy.grafana)
+  hosts: managed_nodes
+  become: yes
+  vars:
+    grafana_security:
+      admin_user: admin
+      admin_password: lab3admin
+    # Use Grafana 9.5 LTS (compatible with cloudalchemy.grafana role v0.18)
+    grafana_version: 9.5.3
+
+  tasks:
+    - name: Install Grafana via Galaxy role
+      include_role:
+        name: cloudalchemy.grafana
+
+    - name: Fix Grafana config for v13+ (legacy alerting removed)
+      ini_file:
+        path: /etc/grafana/grafana.ini
+        section: alerting
+        option: enabled
+        value: "false"
+      notify: restart grafana-server
+
+    - name: Verify Grafana service is running
+      systemd:
+        name: grafana-server
+        state: started
+      register: grafana_status
+
+    - name: Show success
+      debug:
+        msg: "Grafana deployed successfully via Ansible Galaxy role (cloudalchemy.grafana)"
+
+  handlers:
+    - name: restart grafana-server
+      systemd:
+        name: grafana-server
+        state: restarted
+        daemon_reload: yes

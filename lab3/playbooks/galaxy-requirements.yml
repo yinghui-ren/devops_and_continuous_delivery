@@ -1,0 +1,16 @@
+---
+# Lab 3 MEDIUM — Ansible Galaxy roles to install
+# Usage: ansible-galaxy install -r playbooks/galaxy-requirements.yml
+
+roles:
+  # Nginx web server
+  - name: geerlingguy.nginx
+
+  # PostgreSQL database
+  - name: geerlingguy.postgresql
+
+  # Grafana monitoring dashboard
+  - name: cloudalchemy.grafana
+
+  # Nexus repository manager (via Docker, as another example)
+  - name: geerlingguy.docker

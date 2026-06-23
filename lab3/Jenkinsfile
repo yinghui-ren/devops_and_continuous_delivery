@@ -1,0 +1,81 @@
+// Lab 3 HARD — CI/CD pipeline that runs an Ansible playbook
+//
+// This pipeline runs directly on the Jenkins controller (vm1),
+// which also serves as the Ansible master. It syncs the playbooks
+// from the workspace to ~/ansible-lab3/ and executes them against
+// the managed node (vm2, 192.168.58.11).
+
+pipeline {
+    agent any
+
+    environment {
+        ANSIBLE_DIR = "/home/vagrant/ansible-lab3"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Sync Playbooks') {
+            steps {
+                sh '''
+                    mkdir -p ${ANSIBLE_DIR}/playbooks
+                    cp ansible.cfg ${ANSIBLE_DIR}/
+                    cp inventory.ini ${ANSIBLE_DIR}/
+                    cp playbooks/*.yml ${ANSIBLE_DIR}/playbooks/
+                    chmod -R 755 ${ANSIBLE_DIR}
+                '''
+            }
+        }
+
+        stage('Install System Package') {
+            steps {
+                sh '''
+                    cd ${ANSIBLE_DIR}
+                    ansible-playbook playbooks/install-package.yml
+                '''
+            }
+        }
+
+        stage('Manage Package (Install)') {
+            steps {
+                sh '''
+                    cd ${ANSIBLE_DIR}
+                    ansible-playbook playbooks/manage-package.yml --tags install
+                '''
+            }
+        }
+
+        stage('Deploy App via Galaxy') {
+            steps {
+                sh '''
+                    cd ${ANSIBLE_DIR}
+                    ansible-galaxy install -r playbooks/galaxy-requirements.yml --roles-path ${ANSIBLE_DIR}/roles || true
+                    ansible-playbook playbooks/galaxy-nginx.yml
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh '''
+                    cd ${ANSIBLE_DIR}
+                    ansible managed_nodes -m ping
+                    echo "All checks passed. Ansible playbooks executed successfully via Jenkins CI/CD."
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Lab3 HARD pipeline SUCCESS: Ansible playbook executed via Jenkins CI/CD."
+        }
+        failure {
+            echo "Pipeline failed. Check console output for details."
+        }
+    }
+}

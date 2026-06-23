@@ -1,0 +1,26 @@
+---
+# Lab 3 MEDIUM — Deploy nginx using Ansible Galaxy role
+# Role source: geerlingguy.nginx (from Ansible Galaxy)
+#
+# Prerequisites:
+#   ansible-galaxy install -r playbooks/galaxy-requirements.yml
+# Usage:
+#   ansible-playbook playbooks/galaxy-nginx.yml
+
+- name: Deploy nginx using Ansible Galaxy role (geerlingguy.nginx)
+  hosts: managed_nodes
+  become: yes
+
+  tasks:
+    - name: Install nginx via Galaxy role
+      include_role:
+        name: geerlingguy.nginx
+
+    - name: Verify nginx is responding (HTTP 200)
+      uri:
+        url: http://localhost:80
+        status_code: 200
+
+    - name: Show success
+      debug:
+        msg: "nginx deployed successfully via Ansible Galaxy role (geerlingguy.nginx)"

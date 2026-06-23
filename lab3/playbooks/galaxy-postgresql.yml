@@ -1,0 +1,35 @@
+---
+# Lab 3 MEDIUM — Deploy PostgreSQL using Ansible Galaxy role
+# Role source: geerlingguy.postgresql (from Ansible Galaxy)
+#
+# Prerequisites:
+#   ansible-galaxy install -r playbooks/galaxy-requirements.yml
+# Usage:
+#   ansible-playbook playbooks/galaxy-postgresql.yml
+
+- name: Deploy PostgreSQL using Ansible Galaxy role (geerlingguy.postgresql)
+  hosts: managed_nodes
+  become: yes
+  vars:
+    postgresql_databases:
+      - name: lab3_demo
+    postgresql_users:
+      - name: lab3_user
+        password: lab3_pass
+        db: lab3_demo
+        priv: "ALL"
+
+  tasks:
+    - name: Install PostgreSQL via Galaxy role
+      include_role:
+        name: geerlingguy.postgresql
+
+    - name: Verify PostgreSQL service is running
+      systemd:
+        name: postgresql
+        state: started
+      register: pg_status
+
+    - name: Show success
+      debug:
+        msg: "PostgreSQL deployed successfully via Ansible Galaxy role (geerlingguy.postgresql)"
