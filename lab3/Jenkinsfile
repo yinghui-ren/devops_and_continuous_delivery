@@ -1,9 +1,8 @@
 // Lab 3 HARD — CI/CD pipeline that runs an Ansible playbook
 //
-// This pipeline runs directly on the Jenkins controller (vm1),
-// which also serves as the Ansible master. It syncs the playbooks
-// from the workspace to ~/ansible-lab3/ and executes them against
-// the managed node (vm2, 192.168.58.11).
+// Jenkins runs as the 'jenkins' user. All ansible commands are executed
+// via 'sudo -u vagrant' because the vagrant user has the SSH keys,
+// ansible config, and Ansible Galaxy roles already set up.
 
 pipeline {
     agent any
@@ -22,11 +21,11 @@ pipeline {
         stage('Sync Playbooks') {
             steps {
                 sh '''
-                    mkdir -p ${ANSIBLE_DIR}/playbooks
-                    cp ansible.cfg ${ANSIBLE_DIR}/
-                    cp inventory.ini ${ANSIBLE_DIR}/
-                    cp playbooks/*.yml ${ANSIBLE_DIR}/playbooks/
-                    chmod -R 755 ${ANSIBLE_DIR}
+                    sudo -u vagrant mkdir -p ${ANSIBLE_DIR}/playbooks
+                    sudo -u vagrant cp $WORKSPACE/ansible.cfg ${ANSIBLE_DIR}/
+                    sudo -u vagrant cp $WORKSPACE/inventory.ini ${ANSIBLE_DIR}/
+                    sudo -u vagrant cp $WORKSPACE/playbooks/*.yml ${ANSIBLE_DIR}/playbooks/
+                    sudo -u vagrant chmod -R 755 ${ANSIBLE_DIR}
                 '''
             }
         }
@@ -35,7 +34,7 @@ pipeline {
             steps {
                 sh '''
                     cd ${ANSIBLE_DIR}
-                    ansible-playbook playbooks/install-package.yml
+                    sudo -u vagrant ansible-playbook playbooks/install-package.yml
                 '''
             }
         }
@@ -44,7 +43,7 @@ pipeline {
             steps {
                 sh '''
                     cd ${ANSIBLE_DIR}
-                    ansible-playbook playbooks/manage-package.yml --tags install
+                    sudo -u vagrant ansible-playbook playbooks/manage-package.yml --tags install
                 '''
             }
         }
@@ -53,8 +52,8 @@ pipeline {
             steps {
                 sh '''
                     cd ${ANSIBLE_DIR}
-                    ansible-galaxy install -r playbooks/galaxy-requirements.yml --roles-path ${ANSIBLE_DIR}/roles || true
-                    ansible-playbook playbooks/galaxy-nginx.yml
+                    sudo -u vagrant ansible-galaxy install -r playbooks/galaxy-requirements.yml --roles-path ${ANSIBLE_DIR}/roles || true
+                    sudo -u vagrant ansible-playbook playbooks/galaxy-nginx.yml
                 '''
             }
         }
@@ -63,7 +62,7 @@ pipeline {
             steps {
                 sh '''
                     cd ${ANSIBLE_DIR}
-                    ansible managed_nodes -m ping
+                    sudo -u vagrant ansible managed_nodes -m ping
                     echo "All checks passed. Ansible playbooks executed successfully via Jenkins CI/CD."
                 '''
             }
