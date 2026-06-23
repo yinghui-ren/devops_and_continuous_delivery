@@ -1,0 +1,24 @@
+# OS / IDE
+.vagrant/
+*.log
+*.retry
+.DS_Store
+Thumbs.db
+
+# Nested git repos (lab1 and lab2 have their own repos)
+lab1/lab1-cicd-pipeline/.git/
+lab2/.git/
+
+# Binary / large files
+*.pptx
+*.docx
+*.png
+*.jpg
+*.jpeg
+
+# Vagrant
+**/.vagrant/
+
+# IDE
+.vscode/
+.claude/

@@ -1,0 +1,27 @@
+---
+# Lab 3 EASY — Task 1: Install a system package
+# This playbook installs the 'htop' system package on managed nodes.
+# Usage: ansible-playbook playbooks/install-package.yml
+
+- name: Install a system package on managed nodes
+  hosts: managed_nodes
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install htop system package
+      apt:
+        name: htop
+        state: present
+
+    - name: Verify htop is installed
+      command: htop --version
+      register: htop_version
+      changed_when: false
+
+    - name: Show htop version
+      debug:
+        msg: "htop installed: {{ htop_version.stdout }}"

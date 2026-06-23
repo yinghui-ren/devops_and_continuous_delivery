@@ -1,0 +1,130 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+
+  # ===================================================================
+  # VM1 — Ansible Control Node (Master)
+  # ===================================================================
+  config.vm.define "vm1" do |vm1|
+    vm1.vm.hostname = "lab3-ansible-master"
+
+    vm1.vm.network "private_network", ip: "192.168.58.10"
+    vm1.vm.network "forwarded_port", guest: 22, host: 2212, id: "ssh", auto_correct: true
+
+    vm1.vm.synced_folder ".", "/vagrant"
+
+    vm1.vm.provider "virtualbox" do |vb|
+      vb.name   = "lab3-vm1-ansible-master"
+      vb.memory = "2048"
+      vb.cpus   = 2
+    end
+
+    vm1.vm.provision "shell", inline: <<-SHELL
+      set -e
+      export DEBIAN_FRONTEND=noninteractive
+
+      echo "=== Updating system packages ==="
+      apt-get update -y
+
+      echo "=== Installing Ansible ==="
+      apt-get install -y ansible
+
+      echo "=== Installing SSH pass (for password-based auth fallback) ==="
+      apt-get install -y sshpass
+
+      echo "=== Generating SSH key for ansible master ==="
+      sudo -u vagrant ssh-keygen -t rsa -b 2048 -f /home/vagrant/.ssh/id_rsa -N "" || true
+      # Save the public key to /vagrant so VM2 can read it during its provisioning
+      cp /home/vagrant/.ssh/id_rsa.pub /vagrant/id_rsa_vm1.pub
+
+      echo "=== Setting up Ansible working directory (non-world-writable) ==="
+      mkdir -p /home/vagrant/ansible-lab3/playbooks
+      cp /vagrant/ansible.cfg /home/vagrant/ansible-lab3/
+      cp /vagrant/inventory.ini /home/vagrant/ansible-lab3/
+      cp /vagrant/playbooks/*.yml /home/vagrant/ansible-lab3/playbooks/
+      chmod -R 755 /home/vagrant/ansible-lab3
+      chown -R vagrant:vagrant /home/vagrant/ansible-lab3
+
+      echo "=== Provisioning complete (vm1 / Ansible Master) ==="
+      ansible --version
+    SHELL
+  end
+
+  # ===================================================================
+  # VM2 — Managed Node with Docker + Static Containers
+  # ===================================================================
+  config.vm.define "vm2" do |vm2|
+    vm2.vm.hostname = "lab3-node"
+
+    vm2.vm.network "private_network", ip: "192.168.58.11"
+    vm2.vm.network "forwarded_port", guest: 22, host: 2213, id: "ssh", auto_correct: true
+    # Static container ports
+    vm2.vm.network "forwarded_port", guest: 8085, host: 8085   # static container 1 (nginx)
+    vm2.vm.network "forwarded_port", guest: 8086, host: 8086   # static container 2 (httpd)
+
+    vm2.vm.synced_folder ".", "/vagrant"
+
+    vm2.vm.provider "virtualbox" do |vb|
+      vb.name   = "lab3-vm2-node"
+      vb.memory = "2048"
+      vb.cpus   = 2
+    end
+
+    vm2.vm.provision "shell", inline: <<-SHELL
+      set -e
+      export DEBIAN_FRONTEND=noninteractive
+
+      echo "=== Updating system packages ==="
+      apt-get update -y
+
+      echo "=== Installing Docker Engine ==="
+      apt-get install -y ca-certificates curl gnupg
+      install -m 0755 -d /etc/apt/keyrings
+      rm -f /etc/apt/keyrings/docker.gpg
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+        | gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+      chmod a+r /etc/apt/keyrings/docker.gpg
+
+      echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+        | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+      apt-get update -y
+      apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+      usermod -aG docker vagrant
+
+      systemctl enable docker
+      systemctl start docker
+
+      echo "=== Installing Python3 + Docker SDK (required for Ansible modules) ==="
+      apt-get install -y python3 python3-pip
+      pip3 install docker
+
+      echo "=== Running static containers ==="
+      # Static container 1: nginx on port 8085
+      docker rm -f static-nginx 2>/dev/null || true
+      docker run -d --name static-nginx -p 8085:80 nginx:alpine
+
+      # Static container 2: httpd (Apache) on port 8086
+      docker rm -f static-httpd 2>/dev/null || true
+      docker run -d --name static-httpd -p 8086:80 httpd:alpine
+
+      echo "=== Setting up SSH authorized_keys from Ansible master ==="
+      mkdir -p /home/vagrant/.ssh
+      chmod 700 /home/vagrant/.ssh
+      # If VM1's public key is available in /vagrant, add it to authorized_keys
+      if [ -f /vagrant/id_rsa_vm1.pub ]; then
+        cat /vagrant/id_rsa_vm1.pub >> /home/vagrant/.ssh/authorized_keys
+        echo "  Key imported from VM1 successfully."
+      else
+        echo "  WARNING: /vagrant/id_rsa_vm1.pub not found. Run 'vagrant provision vm1' first, then re-provision vm2."
+      fi
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+      chown -R vagrant:vagrant /home/vagrant/.ssh
+
+      echo "=== Provisioning complete (vm2 / Managed Node) ==="
+      docker --version
+      docker ps
+    SHELL
+  end
+end

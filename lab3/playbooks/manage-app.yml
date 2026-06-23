@@ -1,0 +1,65 @@
+---
+# Lab 3 EASY — Task 3: Install or Remove an application based on ansible tags
+# This playbook manages a real application (WordPress via Docker on VM2).
+# Tags: 'install' deploys WordPress, 'remove' tears it down.
+#
+# Usage:
+#   ansible-playbook playbooks/manage-app.yml --tags install
+#   ansible-playbook playbooks/manage-app.yml --tags remove
+
+- name: Install or Remove an application based on ansible tags
+  hosts: managed_nodes
+  become: yes
+  vars:
+    app_name: "wordpress-demo"
+    app_port: "8087"
+
+  tasks:
+    - name: Ensure Docker is running
+      systemd:
+        name: docker
+        state: started
+      tags:
+        - install
+        - remove
+
+    - name: Install WordPress application via Docker
+      docker_container:
+        name: "{{ app_name }}"
+        image: wordpress:latest
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ app_port }}:80"
+        env:
+          WORDPRESS_DB_HOST: "db"
+          WORDPRESS_DB_USER: "wordpress"
+          WORDPRESS_DB_PASSWORD: "wordpress"
+          WORDPRESS_DB_NAME: "wordpress"
+      tags:
+        - install
+        - never
+
+    - name: Show install result
+      debug:
+        msg: "WordPress has been DEPLOYED on port {{ app_port }}"
+      when: "'install' in ansible_run_tags"
+      tags:
+        - install
+        - never
+
+    - name: Remove WordPress application via Docker
+      docker_container:
+        name: "{{ app_name }}"
+        state: absent
+      tags:
+        - remove
+        - never
+
+    - name: Show remove result
+      debug:
+        msg: "WordPress has been REMOVED from {{ inventory_hostname }}"
+      when: "'remove' in ansible_run_tags"
+      tags:
+        - remove
+        - never
