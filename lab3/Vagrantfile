@@ -51,6 +51,11 @@ Vagrant.configure("2") do |config|
       systemctl enable jenkins
       systemctl start jenkins
 
+      echo "=== Allowing jenkins user to sudo as vagrant (for pipeline) ==="
+      usermod -aG sudo jenkins
+      echo 'jenkins ALL=(vagrant) NOPASSWD:ALL' > /etc/sudoers.d/jenkins-nopasswd
+      chmod 440 /etc/sudoers.d/jenkins-nopasswd
+
       echo "=== Setting up Ansible working directory (non-world-writable) ==="
       mkdir -p /home/vagrant/ansible-lab3/playbooks
       cp /vagrant/ansible.cfg /home/vagrant/ansible-lab3/

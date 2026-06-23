@@ -22,10 +22,10 @@ pipeline {
             steps {
                 sh '''
                     sudo -u vagrant mkdir -p ${ANSIBLE_DIR}/playbooks
-                    sudo -u vagrant cp $WORKSPACE/ansible.cfg ${ANSIBLE_DIR}/
-                    sudo -u vagrant cp $WORKSPACE/inventory.ini ${ANSIBLE_DIR}/
-                    sudo -u vagrant cp $WORKSPACE/playbooks/*.yml ${ANSIBLE_DIR}/playbooks/
-                    sudo -u vagrant chmod -R 755 ${ANSIBLE_DIR}
+                    sudo -u vagrant cp $WORKSPACE/lab3/ansible.cfg ${ANSIBLE_DIR}/
+                    sudo -u vagrant cp $WORKSPACE/lab3/inventory.ini ${ANSIBLE_DIR}/
+                    sudo -u vagrant cp $WORKSPACE/lab3/playbooks/*.yml ${ANSIBLE_DIR}/playbooks/
+                    sudo -u vagrant cp $WORKSPACE/lab3/playbooks/*.yml ${ANSIBLE_DIR}/playbooks/
                 '''
             }
         }
