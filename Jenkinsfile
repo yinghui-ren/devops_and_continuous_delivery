@@ -1,5 +1,9 @@
-pipeline {
+  pipeline {
       agent any
+
+      environment {
+          DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
+      }
 
       stages {
           stage('Build') {
@@ -25,6 +29,24 @@ pipeline {
                       "
                   '''
               }
+          }
+      }
+
+      post {
+          success {
+              sh '''
+                  curl -H "Content-Type: application/json" \
+                  -d '{"content":"AAP DevOps POC pipeline succeeded: Build, Test and Deploy completed."}' \
+                  "$DISCORD_WEBHOOK_URL"
+              '''
+          }
+
+          failure {
+              sh '''
+                  curl -H "Content-Type: application/json" \
+                  -d '{"content":"AAP DevOps POC pipeline failed. Please check Jenkins logs."}' \
+                  "$DISCORD_WEBHOOK_URL"
+              '''
           }
       }
   }
