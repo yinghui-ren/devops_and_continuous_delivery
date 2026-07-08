@@ -1,11 +1,21 @@
 pipeline {
-	agent any
-
-		environment {
-			DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
+	agent {
+		docker {
+			image 'node:22-bookworm'
+				args '-u root -v /var/lib/jenkins/.ssh:/root/.ssh:ro'
 		}
+	}
+
+	environment {
+		DISCORD_WEBHOOK_URL = credentials('discord-webhook-url')
+	}
 
 	stages {
+		stage('Agent Setup') {
+			steps {
+				sh 'apt-get update && apt-get install -y openssh-client curl git'
+			}
+		}
 		stage('Build') {
 			steps {
 				sh 'npm install'
