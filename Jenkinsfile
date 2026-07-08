@@ -42,7 +42,14 @@ pipeline {
 		}
 		stage('Health Check') {
 			steps {
-				sh 'curl -f http://192.168.88.130:3000/health'
+				sh '''
+					sleep 5
+					for i in 1 2 3 4 5; do
+						curl -f http://192.168.88.130:3000/health && exit 0
+						sleep 3
+					done
+					exit 1
+					'''
 			}
 		}
 
