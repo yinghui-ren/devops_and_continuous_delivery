@@ -27,7 +27,9 @@ test('GET / returns the demo message', () => {
   home({}, response);
 
   assert.equal(response.statusCode, 200);
-  assert.equal(response.body, 'Hello from AAP DevOps POC');
+  assert.match(response.body, /AAP DevOps POC/);
+  assert.match(response.body, /CI\/CD Pipeline/);
+  assert.match(response.body, /Production online/);
 });
 
 test('GET /health returns OK', () => {
