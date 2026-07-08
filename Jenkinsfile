@@ -14,7 +14,7 @@ pipeline {
 	stages {
 		stage('Agent Setup') {
 			steps {
-				sh 'apt-get update && apt-get install -y openssh-client curl git'
+				sh 'apt-get update && apt-get install -y openssh-client curl git rsync'
 			}
 		}
 		stage('Build') {
@@ -32,11 +32,14 @@ pipeline {
 		stage('Deploy') {
 			steps {
 				sh '''
+					DEPLOY_DIR=/home/yinghui/aap-devops-poc/devops_and_continuous_delivery
+					rm -rf /tmp/release && mkdir -p /tmp/release
+					cp -r src package.json package-lock.json node_modules /tmp/release/
+
+					rsync -avz --delete -e ssh /tmp/release/ yinghui@192.168.88.130:"$DEPLOY_DIR"/
+
 					ssh yinghui@192.168.88.130 "
-					cd /home/yinghui/aap-devops-poc/devops_and_continuous_delivery &&
-					git pull origin yinghui-test &&
-					npm install &&
-					pm2 restart aap-devops-poc || pm2 start src/server.js --name aap-devops-poc
+					pm2 restart aap-devops-poc || pm2 start $DEPLOY_DIR/src/server.js --name aap-devops-poc
 					"
 					'''
 			}
