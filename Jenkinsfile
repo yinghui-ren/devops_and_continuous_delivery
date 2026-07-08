@@ -1,8 +1,9 @@
 pipeline {
 	agent {
 		docker {
-			image 'node:22-bookworm'
-				args '-u root -v /var/lib/jenkins/.ssh:/root/.ssh:ro'
+			label 'docker-agent'
+				image 'node:22-bookworm'
+				args '-u root -v /home/yinghui/.ssh:/root/.ssh:ro'
 		}
 	}
 
@@ -46,10 +47,10 @@ pipeline {
 					sleep 5
 					for i in 1 2 3 4 5; do
 						curl -f http://192.168.88.130:3000/health && exit 0
-						sleep 3
-					done
-					exit 1
-					'''
+							sleep 3
+							done
+							exit 1
+							'''
 			}
 		}
 
