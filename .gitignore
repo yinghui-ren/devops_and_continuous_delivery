@@ -39,3 +39,7 @@ Thumbs.db
 workspace/
 tmp/
 temp/
+
+# Local reference documents
+*.pdf
+*.pdf:Zone.Identifier
