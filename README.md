@@ -31,7 +31,7 @@ This POC used these 3 hosts (adjust the IPs below to match your own environment)
 ## Application endpoints
 
 ```text
-GET /        -> Hello from AAP DevOps POC
+GET /        -> Styled HTML report page (pipeline steps, deployment architecture)
 GET /health  -> { "status": "OK" }
 ```
 

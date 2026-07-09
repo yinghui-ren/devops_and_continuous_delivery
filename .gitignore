@@ -43,3 +43,6 @@ temp/
 # Local reference documents
 *.pdf
 *.pdf:Zone.Identifier
+2026-ST2DCD-PROJECT .docx
+jenkins-controller-agent-explanation.md
+part3-poc-summary.md
